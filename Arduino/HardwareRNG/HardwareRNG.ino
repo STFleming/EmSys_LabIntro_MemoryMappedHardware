@@ -14,4 +14,4 @@ void setup() {
 void loop() {
     delay(1);
     Serial.println(*hardware_rng);
-}
+}  
