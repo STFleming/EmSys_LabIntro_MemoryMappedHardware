@@ -1,4 +1,3 @@
-// Setting up the serial connection
 // author: stf
 
 unsigned int *hardware_rng; // a variable that is a pointer
