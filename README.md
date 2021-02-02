@@ -1,9 +1,10 @@
 # Lecture 1: Lab Introduction & Memory Mapped Hardware 
 In this lecture, we will look at Lab 1, and we will also investigate the hardware/software boundary.
 
-# Lab Admin
-Firstly let's go through some Admin for the labs.
+### Arduino code
+The technical content of this lecture is mainly around live coding demonstrations in the Arduino IDE (what you'll be using in labs). We will be using it to investigate pointers and manipulate the hardware registers of the device. The code examples that I follow can be found [[here](https://github.com/STFleming/EmSys_LabIntro_MemoryMappedHardware/tree/main/Arduino)]. _Note that they may differ slightly from what I code in the lecture_
 
+# Lab Admin
 ### Lab Groups 
 For the labs, you will need to arrange yourselves into groups of two or three. Once you have decided on the members of your group __one lab member__ should input the student IDs of each group member into the form found here [[form link](https://forms.office.com/Pages/ResponsePage.aspx?id=LrXKu76f1kOi859mxD3yaGURemXIkvJEi0OJyB0IdsxUNDNPUVFHWFdZSVFQMUhTTTNTRDRBSjBRNi4u)] by __Wednesday 03/02/2021__ before __15:00__ . After this time, any people left over will be randomly allocated into groups.
 
