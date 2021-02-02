@@ -1,4 +1,3 @@
-// Setting up the serial connection
 // author: stf
 
 unsigned int a; // a variable

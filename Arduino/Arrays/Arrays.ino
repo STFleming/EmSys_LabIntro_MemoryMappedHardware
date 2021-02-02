@@ -1,4 +1,3 @@
-// Setting up the serial connection
 // author: stf
 
 int a[8] = {42, 43, 44, 45, 46, 47, 48, 49}; // a variable
