@@ -7,7 +7,6 @@ void setup() {
         Serial.begin(115200);
         Serial.print("\n\n");
 
-
         a = 10;
         ptr_a = &a; // ptr is pointing to the address of a
 

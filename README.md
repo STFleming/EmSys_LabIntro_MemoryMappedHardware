@@ -62,3 +62,56 @@ In order to effectively use a pointer, we need to have the ability to lookup whe
 
 Let's compile the code and see what the output looks like on the ``Serial`` monitor in Arduino.
 
+> Variable a has value:10
+>
+> and lives at address 0x3FFC00C8
+
+
+We can see here that the value of the variable was printed along with it's address ``0x3FFC00C8`` in Hexadecimal. We can now dive into the [[ESP32 Technical Reference Manual (TRM)](https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf)] to find out what this address region corresponds to in the device we will be working with on this course, the ESP32 System-on-Chip (SoC).
+
+On Page 27 of the TRM we can see the following chart.
+
+![](imgs/address_map_general.png)
+
+What we can see from the chart that our variable ``a`` which has address ``0x3FFC00C8`` lies in the region ``0x3FF80000 - 0x3FFFFFFF`` which maps into the ``512KB Embedded Memory`` of our SoC. Scrolling down a bit further we can find a further breakdown of the address space for the embedded memory.
+
+![](imgs/embedded_memory.png)
+
+From this we can see that our address ``0x3FFC00C8`` is in the region ``0x3FFAE0000 - 0x3FFDFFFF`` which is the ``Internal SRAM 2``, a very fast memory quite close to the CPU in our SoC.
+
+### Derefrencing a pointer
+
+We can also manipulate the data stored at the address a pointer point to. To use pointers in this way we need to do something called derefrencing.
+
+Take the following example:
+
+```C
+int a; // a variable
+int *ptr_a; // a variable that is a pointer
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        a = 10;
+        ptr_a = &a; // ptr is pointing to the address of a
+
+        *ptr_a = 40;
+
+        Serial.print("Dereferencing a = ");
+        Serial.println(*ptr_a);
+}
+```
+
+This example is almost the same as the previous one, again we have ``a`` and ``ptr_a``. However, now we also have some other operations again using the ``*`` operator.
+
+In the line ``*ptr_a = 40;`` we are using the ``*`` operator to assign the value 40 __into the location that the pointer is pointing to__.
+In this case ``ptr_a`` is pointing at the memory location of variable ``a``, so the line of code ``*ptr_a = 40;`` overwrites the ``10`` already stored in ``a`` with ``40``. Essentially what is happening here, is the compiler is issuing a load to get the address stored in ``ptr_a``, it is then immediately using the address returned to perform a store operation with the literal value ``40``. 
+
+A similar story can be said for dereferencing a pointer for reading purposes. In the line ``Serial.print(*ptr_a);`` the ``*ptr_a`` is telling the compiler, load the value stored in ``ptr_a`` then immediately use that returned value to perform another load, getting the contents of the ``a`` variable. 
+
+This dual use of the ``*`` operator in the C syntax can be a source of confusion for people new to pointers, essentially:
+* ``*`` is used to:
+  * __declare__ a pointer type, e.g. ``int * ptr_a;`` 
+  * __dereference__ a pointer, either for reading purposes ``Serial.print(*ptr_a)``, or for writing ``*ptr_a = 40``.
+* ``&`` is used to get the address of a variable or object
