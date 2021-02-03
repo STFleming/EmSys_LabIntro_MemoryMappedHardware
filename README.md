@@ -62,10 +62,10 @@ In order to effectively use a pointer, we need to have the ability to lookup whe
 
 Let's compile the code and see what the output looks like on the ``Serial`` monitor in Arduino.
 
-> Variable a has value:10
->
-> and lives at address 0x3FFC00C8
-
+```
+Variable a has value:10
+and lives at address 0x3FFC00C8
+```
 
 We can see here that the value of the variable was printed along with it's address ``0x3FFC00C8`` in Hexadecimal. We can now dive into the [[ESP32 Technical Reference Manual (TRM)](https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf)] to find out what this address region corresponds to in the device we will be working with on this course, the ESP32 System-on-Chip (SoC).
 
@@ -115,3 +115,207 @@ This dual use of the ``*`` operator in the C syntax can be a source of confusion
   * __declare__ a pointer type, e.g. ``int * ptr_a;`` 
   * __dereference__ a pointer, either for reading purposes ``Serial.print(*ptr_a)``, or for writing ``*ptr_a = 40``.
 * ``&`` is used to get the address of a variable or object
+
+### Double pointer
+We can also go further and make pointers to pointers.
+
+```C
+int a; // a variable
+int *ptr_a; // a variable that is a pointer
+int **ptr_ptr_a;
+int ***ptr_ptr_ptr_a;
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+
+        a = 10;
+        ptr_a = &a; // ptr is pointing to the address of a
+        ptr_ptr_a = &ptr_a; // a pointer to a pointer of a
+        ptr_ptr_ptr_a = &ptr_ptr_a;
+
+        Serial.print("Variable a has value:");
+        Serial.println(a);
+
+        Serial.print("and lives at address 0x");
+        Serial.println((unsigned int)ptr_a, HEX);
+
+        Serial.print("Double dereference: ");
+        Serial.println(***ptr_ptr_ptr_a);
+}
+
+```
+
+In the example above, we have ``ptr_ptr_ptr_a``, which is pointing at the address of ``ptr_ptr_a``, which is pointing at the address of ``ptr_a``, which is pointing at the address of ``a``.
+Again all the derefrencing operations above work in these cases also. However, notice the number of ``*``s used increases with the levels of indirection, in both derefrencing the pointer and in declaring it.
+
+Compiling and running this gives the following serial console output:
+
+```
+Variable a has value:10
+and lives at address 0x3FFC00D0
+Double dereference: 10
+```
+
+### Pointer types
+
+_Why do we have pointer types? Why dont we just have one address type?_
+
+In the previous example we declared an integer type pointer, ``int * ptr_a;``. But why did we do this, all of our addresses in our system are 32-bit. Why didn't we just declare some sort of 32-bit value to store the address location.
+
+__The reason is because pointers take into account the size of the data item that they are pointing to.__ Different types in the system consume a different number of bytes, consider the following code:
+
+```C
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+  
+        Serial.print("datatype      size\n");
+        Serial.print("int           "); Serial.println(sizeof(int));
+        Serial.print("float         "); Serial.println(sizeof(float));
+        Serial.print("char          "); Serial.println(sizeof(char));
+        Serial.print("uint16_t      "); Serial.println(sizeof(uint16_t));
+        Serial.print("bool          "); Serial.println(sizeof(bool));
+}
+```
+This is printing out the size of different datatypes in number of bytes. The ``sizeof()`` function is used to return in bytes the type of the input argument for that system. Running this gives us the following serial console output:
+
+```
+ datatype      size
+ int           4
+ float         4
+ char          1
+ uint16_t      2
+ bool          1
+```
+
+What we can see from the output that different datatypes consume different amounts of bytes in memory. In most modern systems memory is byte-addressable, meaning that we can address one byte of memory at a time in hardware. For this reason our smallest datatypes, ``bool`` and ``char`` consume one byte of data. The ``bool`` type is quite wasteful, it can be represented by a single bit but because memory hardware is byte-addressable, requires a whole byte to be stored.  
+
+We can perform arithmetic on pointers, and the compiler will take into account the size of the item when we are manipulating the addresses that the pointer points at.
+
+For instance, consider the following arduino code:
+
+```C 
+int a;
+int* ptr_a;
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+        
+        a = 10;
+        ptr_a = &a; // ptr is pointing to the address of a
+        
+        Serial.print("Variable a has value:");
+        Serial.println(a);
+        Serial.print("and lives at address 0x");       
+        Serial.println((unsigned int)ptr_a, HEX);
+        
+        ptr_a = ptr_a + 1;
+        Serial.print("ptr_a now points to address 0x");
+        Serial.println((unsigned int)ptr_a, HEX);
+}
+```
+Which produces the following serial output:
+
+```
+Variable a has value:10
+and lives at address 0x3FFC00C8
+ptr_a now points to address 0x3FFC00CC
+```
+
+In this example, the pointer ``ptr_a`` is of type ``int *``, meaning it is pointing to an integer which is 4 bytes in size. When we perform arithmetic on the pointer with the line ``ptr_a = ptr_a + 1``, what we can see if that the address stored in ``ptr_a`` has changed from ``0x3FFC00C8`` to ``0x3FFC00CC``. Now looking at ``0x3FFC00CC - 0x3FFC00C8 = 4`` the size of an integer.
+
+Next consider the following code:
+
+```C
+bool a; // a variable
+bool *ptr_a; // a variable that is a pointer
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        a = true;
+        ptr_a = &a; // ptr is pointing to the address of a
+
+        Serial.print("Variable a has value:");
+        Serial.println(a);
+        Serial.print("and lives at address 0x");
+        Serial.println((unsigned int)ptr_a, HEX);      
+
+        ptr_a = ptr_a + 1;
+        Serial.print("ptr_a now points to address 0x");
+        Serial.println((unsigned int)ptr_a, HEX); 
+}
+```
+In this example the variable ``a`` and ``ptr_a`` have been changed from an ``int`` and ``int *`` type to a ``bool`` and ``bool *`` type. When we execute the code we get the following serial console output:
+
+```
+Variable a has value:1
+and lives at address 0x3FFC00C8
+ptr_a now points to address 0x3FFC00C9
+```
+What we can see now is that the address only increased by one byte, ``0x3FFC00C9 - 0x3FFC00C8 = 1`` the size of a ``bool`` variable on our system. 
+
+Where this is really useful is with arrays.
+
+### Arrays in C
+
+An array in C essentially blocks out a chunk of contiguous (right next to each other) memory that can be used. Take the example below:
+
+```C
+int a[8] = {42, 43, 44, 45, 46, 47, 48, 49}; // an array 
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        for(int i=0; i<8; i++) {
+            Serial.print("[0x");
+            Serial.print((unsigned int)&a[i],HEX);
+            Serial.print("] = ");
+            Serial.println(a[i]);
+        }
+
+}
+```
+
+This declares an integer array ``int a[8]`` and initialises it with the values ``42,43,44,45,46,47,48,49``. Using a for loop and our ``&`` operator discussed earlier we can print out the memory address for each element of our array and the value stored at that location. Running the code produces the following serial console output:
+
+```
+[0x3FFBEBE8] = 42
+[0x3FFBEBEC] = 43
+[0x3FFBEBF0] = 44
+[0x3FFBEBF4] = 45
+[0x3FFBEBF8] = 46
+[0x3FFBEBFC] = 47
+[0x3FFBEC00] = 48
+[0x3FFBEC04] = 49
+```
+
+What we can notice is that for each element of our array the address is increasing by the type of the array, in this case an ``int`` which is 4 bytes.
+
+In the previous section we looked at how pointer arithmetic took into consideration the type of the pointer. If we add 1 to an ``int *`` it will increase the address by 4 Bytes. This means that we can use it to iterate over the array. For example, we can change the code above with:
+
+```C
+int a[8] = {42, 43, 44, 45, 46, 47, 48, 49}; // an array
+int *ptr_a; // a variable that is a pointer
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        ptr_a = &a[0]; // points to the first element of the array 
+        for(int i=0; i<8; i++) {
+                Serial.print("[0x");
+                Serial.print((unsigned int)(ptr_a), HEX);
+                Serial.print("] = ");
+                Serial.println(*ptr_a);
+                ptr_a = ptr_a + 1;
+        }
+}
+```
+
+Where we have replaced reading the array ``a[i]`` instead with pointer arithmetic on ``ptr_a``, and we would get exactly the same output on the serial console. 
