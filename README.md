@@ -319,3 +319,87 @@ void setup() {
 ```
 
 Where we have replaced reading the array ``a[i]`` instead with pointer arithmetic on ``ptr_a``, and we would get exactly the same output on the serial console. 
+
+Arrays and pointers are deeply linked, in fact the C standard defines the array syntax as:
+
+```
+             a[b] == *(a + b)
+```
+
+Which means that ``a[b]`` is equal to the pointer ``a`` where we have added ``b`` and dereferenced it all ``*(a + b)``. Now, since addition is commutative, we can actually do this monstrosity and it will compile and work:
+
+```C
+int a[8] = {42, 43, 44, 45, 46, 47, 48, 49}; // an array
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        // a[b] == *(a + b)
+        Serial.println(0[a]); 
+        Serial.println(1[a]);
+        Serial.println(2[a]);
+        Serial.println(3[a]); // 3[a] == *(3 + a) == *(a + 3)
+        Serial.println(4[a]);
+        Serial.println(5[a]);
+
+}
+```
+
+Which will run and produce the serial output:
+
+```
+42
+43
+44
+45
+46
+47
+```
+
+``5[a]`` to me looks like it shouldn't compile, but hey... 
+
+### Pointer casting
+
+Another useful feature of pointers is that we can cast them into different types to slice up memory in different ways. I wont go into the details of it here, but there is an example in this repo [[here](Arduino/Casting/Casting.ino)] that demonstrates this.
+
+## Memory-mapped hardware
+
+Remember at the start I said that we would be using memory addresses to interact with hardware. Well that is why pointers are so handy, we can assign them memory addresses, and then derefrence them to read or write values. If a block of hardware in our system has a memory-mapped address then we can construct a pointer for it and write directly into our hardware units and manipulate them.
+
+Let's look at a simple hardware block, the true random number generator on the ESP32 chip, which is described on page 594 of the [[Technical Reference Manual (TRM)](https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf)]. 
+
+![](imgs/random_number_generator.png)
+
+This is a true random number generator that uses samples noise from the ADCs periodically to increase entropy. This unit is memory-mapped in the system and has a very simple interface:
+
+![](imgs/random_number_generator_register.png)
+
+The register for the hardware random number generator is mapped to address ``0x3FF75144`` and it is a ``RO` (read only) register, any writes to it are just thrown away. Let's write some simple code to periodically read from this register, and then we can use the Arduino serial plotter to plot it. 
+
+```C
+unsigned int *hardware_rng; // a variable that is a pointer
+
+void setup() {
+        Serial.begin(115200);
+        Serial.print("\n\n");
+
+        hardware_rng = (unsigned int*)(0x3FF75144);
+        
+}
+
+void loop() {
+    delay(1);
+    Serial.println(*hardware_rng);
+}  
+```
+In this code we are defining a pointer ``unsigned int *hardware_rng;``, which we are assigning a value ``(unsigned int*)(0x3FF75144)``, the address of our hardware random number generator we got from the datasheet. The ``(unsigned int*)`` is called a cast, and we are using it to make the literal ``0x3FF75144`` the same type as our pointer. 
+
+In the ``loop()`` of our arduino sketch we can then read our true hardware number generator by simply derefrencing the pointer we just defined. We can then pass that over the serial channel where we can plot it with the Arduino plotter (Tools->serial plotter), to get the following output:
+
+![](imgs/random.png)
+
+And that's it. We have used a pointer to interact with memory mapped hardware.
+
+
+
